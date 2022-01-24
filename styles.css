@@ -5,6 +5,9 @@ html {
 body {
     font-size: 20px;
 }
+* {
+    font-family: 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
+}
 h1 {
     text-align: center;
     font-size: 5rem;
@@ -15,10 +18,12 @@ h1 {
     place-items: center;
 }
 .recommendation {
-    width: 25vw;
-    height: 25vh;
+    width: 30vw;
+    height: 30vh;
     background: red;
     cursor: grab;
+    display: flex;
+    flex-direction: column;
 }
 
 .drop-zones {
@@ -38,6 +43,7 @@ h1 {
     width: 50vw;
     height: 30vh;
     box-sizing: border-box;
+    border-radius: 20px;
 }
 .interested {
     background-color: rgba(0, 255, 150, 0.2);
@@ -48,4 +54,14 @@ h1 {
 .dragging {
     display: none;
     cursor: grabbing;
+}
+.hidden {
+    display: none;
+}
+.spacer {
+    margin-top: auto;
+}
+.song-info {
+    padding: 0rem 1rem 0rem 1rem;
+    background: rgba(255, 255, 255, 0.8);
 }
