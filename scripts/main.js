@@ -5,7 +5,6 @@ let notInterested = document.querySelector(".not-interested");
 let content = document.querySelector(".content");
 let authorise = document.querySelector(".authorise");
 let audio;
-let playing = false;
 
 if (window.location.href.includes("#access_token")) {
     authorise.classList.add("hidden");
@@ -20,20 +19,16 @@ if (window.location.href.includes("#access_token")) {
         getStarted.href = buildHref();
     } else {
         authorise.classList.add("hidden");
-        addEventListeners();
+        addDragEventListeners();
         getRecommendations();
     }
 }
 
 
-function addEventListeners() {
+function addDragEventListeners() {
     recommendation.addEventListener("dragstart", (e) => {
         e.dataTransfer.dropEffect = "move";
-        e.dataTransfer.setData("songInfo", {
-            track: recommendation.children[0].innerText,
-            artists: recommendation.children[1],
-            album: recommendation.children[2]
-        });
+        e.dataTransfer.setData("text/plain", recommendation.id);
         setTimeout(() => recommendation.classList.add("dragging"), 0);
     });
     recommendation.addEventListener("dragend", () => {
@@ -53,11 +48,16 @@ function addEventListeners() {
             dropZone.style.backgroundColor = backgroundColor.replace("0.2", "0.5");
         });
         dropZone.addEventListener("drop", (e) => {
-            if (playing) {
-                audio.pause();
-                playing = false;
+            const data = e.dataTransfer.getData("text");
+            if (dropZone.id === "interested") {
+                let seeds = JSON.parse(sessionStorage.getItem("seeds"));
+                seeds.unshift(data);
+                seeds.splice(seeds.length - 1, 1);
+                sessionStorage.setItem("seeds", JSON.stringify(seeds));
+                getRecommendations();
+            } else {
+                getRecommendations();
             }
-            console.log(e.dataTransfer.getData("songInfo"), dropZone, "hehehehe");
         });
         [...dropZone.children].forEach(child => child.style.pointerEvents = "none");
     });
@@ -91,30 +91,38 @@ function parseResponseURL(hash) {
     sessionStorage.setItem("token_type", hashBits[1].replace("token_type=", ""));
     sessionStorage.setItem("expires_in", hashBits[2].replace("expires_in=", ""));
     sessionStorage.setItem("state", hashBits[3].replace("state=", ""));
+    setExpiresInDate();
 }
 
 async function getRecommendations() {
+    if (validateAccessToken()) {
+        return;
+    }
     if (!sessionStorage.getItem("seeds")) {
         await fetch("https://api.spotify.com/v1/me/top/tracks?limit=5&time_range=long_term", getHeaders())
             .then((response) => response.json()).then(data => {
-                sessionStorage.setItem("seeds", JSON.stringify(data.items));
+                console.log(data);
+                sessionStorage.setItem("seeds", JSON.stringify(data.items.map(item => item.id)));
             });
-
     }
-    const seeds = JSON.parse(sessionStorage.getItem("seeds")).map(s => s.id).join(",");
+    const seeds = JSON.parse(sessionStorage.getItem("seeds")).join(",");
     fetch(`https://api.spotify.com/v1/recommendations?seed_tracks=${seeds}&limit=1`, getHeaders())
         .then((response) => response.json()).then(data => {
+            removeOldSongInfoNodes();
             appendSongInfo(data.tracks[0].name);
             appendSongInfo(data.tracks[0].artists.map(a => a.name).join(", "));
             appendSongInfo(data.tracks[0].album.name);
+            recommendation.id = data.tracks[0].id;
+            if (audio && isPlayingAudio()) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+            audio = new Audio(data.tracks[0].preview_url);
             recommendation.addEventListener("mouseup", () => {
-                if (playing) {
-                    audio.pause();
-                    playing = false;
-                } else {
-                    audio = new Audio(data.tracks[0].preview_url);
+                if (!isPlayingAudio()) {
                     audio.play();
-                    playing = true;
+                } else {
+                    audio.pause();
                 }
             });
             fetch(`https://api.spotify.com/v1/albums/${data.tracks[0].album.id}`, getHeaders())
@@ -124,6 +132,15 @@ async function getRecommendations() {
                     recommendation.style.backgroundSize = "cover";
                 });
         });
+}
+
+const isPlayingAudio = () => audio.currentTime > 0 && !audio.paused && !audio.ended && audio.readyState > audio.HAVE_CURRENT_DATA;
+
+function removeOldSongInfoNodes() {
+    const oldsongInfoElements = document.getElementsByClassName("song-info");
+    while (oldsongInfoElements.length > 0) {
+        oldsongInfoElements[0].parentElement.removeChild(oldsongInfoElements[0]);
+    }
 }
 
 function appendSongInfo(songInfo) {
@@ -140,4 +157,20 @@ function getHeaders() {
             "Content-Type": "application/json"
         }
     }
+}
+
+function setExpiresInDate() {
+    let expiresIn = new Date();
+    expiresIn.setSeconds(expiresIn.getSeconds() + parseInt(sessionStorage.getItem("expires_in")));
+    sessionStorage.setItem("expiration_date", JSON.stringify(expiresIn));
+}
+
+function validateAccessToken() {
+    const expiresIn = new Date(JSON.parse(sessionStorage.getItem("expiration_date")));
+    if (expiresIn <= new Date()) {
+        sessionStorage.clear();
+        window.location.reload();
+        return true;
+    }
+    return false;
 }

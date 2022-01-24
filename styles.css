@@ -13,17 +13,23 @@ h1 {
     font-size: 5rem;
 }
 
+.authorise {
+    padding: 2rem;
+}
+
 .recommendations {
     display: grid;
     place-items: center;
 }
 .recommendation {
-    width: 30vw;
-    height: 30vh;
+    width: 60vw;
+    height: 50vh;
+    margin-top: 2rem;
     background: red;
     cursor: grab;
     display: flex;
     flex-direction: column;
+    border-radius: 10px;
 }
 
 .drop-zones {
@@ -41,9 +47,10 @@ h1 {
 .not-interested {
     text-align: center;
     width: 50vw;
-    height: 30vh;
+    height: 30vh !important;
     box-sizing: border-box;
     border-radius: 20px;
+    transition: height 0.3s ease-in-out;
 }
 .interested {
     background-color: rgba(0, 255, 150, 0.2);
@@ -53,7 +60,6 @@ h1 {
 }
 .dragging {
     display: none;
-    cursor: grabbing;
 }
 .hidden {
     display: none;
