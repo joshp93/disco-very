@@ -10,7 +10,7 @@ if (window.location.href.includes("#access_token")) {
     authorise.classList.add("hidden");
     content.classList.remove("hidden");
     parseResponseURL(window.location.hash);
-    window.history.pushState('disco-very', 'disco-very', window.location.origin);
+    window.history.pushState('disco-very', 'disco-very', window.location.origin + "/disco-very/");
 } else {
     if (!sessionStorage.getItem("access_token")) {
         content.classList.add("hidden");
