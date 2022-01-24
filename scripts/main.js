@@ -73,7 +73,7 @@ function buildHref() {
     return "https://accounts.spotify.com/authorize?" +
         `client_id=1a55f7a13b364a01b7677fb928e785fb&` +
         "response_type=token&" +
-        `redirect_uri=http://localhost:${window.location.port}&` +
+        `redirect_uri=${window.location.href}&` +
         `state=${this.generateState()}&` +
         `scope=user-read-email user-top-read`
 }
